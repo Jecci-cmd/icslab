@@ -119,8 +119,8 @@ public:
         stats.instructions_retired = instruction_count_;
         stats.ipc = (cycle_count_ > 0) ? 
             static_cast<double>(instruction_count_) / cycle_count_ : 0.0;
-        stats.stall_cycles = 0;  // 可以后续添加统计
-        stats.bubble_cycles = 0; // 可以后续添加统计
+        stats.stall_cycles = stall_cycles_;
+        stats.bubble_cycles = bubble_cycles_;
         return stats;
     }
     
@@ -169,6 +169,8 @@ private:
     // 性能统计
     uint64_t cycle_count_;
     uint64_t instruction_count_;
+    uint64_t stall_cycles_;      // Stall周期计数
+    uint64_t bubble_cycles_;     // Bubble周期计数
     
     // 是否已停机
     bool halted_;

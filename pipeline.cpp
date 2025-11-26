@@ -4,7 +4,8 @@
 #include <algorithm>
 
 PipelineSimulator::PipelineSimulator() 
-    : PC_(0), STAT_(Y86::STAT_AOK), cycle_count_(0), instruction_count_(0), halted_(false) {
+    : PC_(0), STAT_(Y86::STAT_AOK), cycle_count_(0), instruction_count_(0), 
+      stall_cycles_(0), bubble_cycles_(0), halted_(false) {
     // 初始条件码：ZF=1, SF=0, OF=0（根据CSAPP）
     CC_ = {true, false, false};
 }
@@ -24,6 +25,8 @@ void PipelineSimulator::loadProgram(const std::vector<uint8_t>& program) {
     states_.clear();
     cycle_count_ = 0;
     instruction_count_ = 0;
+    stall_cycles_ = 0;
+    bubble_cycles_ = 0;
     halted_ = false;
     
     // 初始化流水线寄存器
@@ -645,6 +648,11 @@ void PipelineSimulator::run() {
         bool stall = needStall(d_e_prev, e_m_prev);
         bool bubble = needBubble(d_e_prev, e_m_prev);
         
+        // 统计Stall周期
+        if (stall) {
+            stall_cycles_++;
+        }
+        
         // 处理跳转和控制流 - 暂时不检查，会在execute之后检查
         bool jmp_flush = false;  // JXX跳转成功需要flush
         
@@ -730,6 +738,9 @@ void PipelineSimulator::run() {
             d_e_new.stat = Y86::STAT_AOK;
             d_e_new.valid = true;
             d_e_new.is_bubble = true;  // 标记为bubble
+            
+            // 统计Bubble周期（每个bubble、ret_flush、jmp_flush都算一个bubble周期）
+            bubble_cycles_++;
         } else if (f_d_prev.valid) {
             decode(f_d_prev, d_e_new);
         } else {
