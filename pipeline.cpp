@@ -739,8 +739,17 @@ void PipelineSimulator::run() {
             d_e_new.valid = true;
             d_e_new.is_bubble = true;  // 标记为bubble
             
-            // 统计Bubble周期（每个bubble、ret_flush、jmp_flush都算一个bubble周期）
-            bubble_cycles_++;
+            // 统计Bubble周期（根据实际浪费的周期数）
+            // ret_flush: 3 cycles wasted (flush F/D, D/E, E/M)
+            // jmp_flush: 2 cycles wasted (flush F/D, D/E)
+            // plain bubble: 1 cycle wasted
+            if (ret_flush) {
+                bubble_cycles_ += 3;
+            } else if (jmp_flush) {
+                bubble_cycles_ += 2;
+            } else {
+                bubble_cycles_ += 1;
+            }
         } else if (f_d_prev.valid) {
             decode(f_d_prev, d_e_new);
         } else {
